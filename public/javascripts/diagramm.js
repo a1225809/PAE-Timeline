@@ -21,8 +21,7 @@ $(document).ready(function(){
 		createRects(pd);
 		statistics.append('<span>Different time periods: '+rectArrayKeys.length+'</span><br>');
 		statistics.append('<span>min Year: '+minYear+'<br>max Year: '+maxYear+'<br>max Coins at one period: '+maxItems+'</span><br>');		
-		drawDiagramm();
-		
+		drawDiagramm();		
 	});
 });
 var rectArray = Array();
@@ -32,6 +31,9 @@ var createRects = function(data){
 		lookUpInArray(data[i]);
 	}
 }
+
+
+
 var drawDiagramm = function(){	
 	var canvas = document.getElementById('diagramm-canvas');
 	canvas.width = Math.abs(minYear)+maxYear;

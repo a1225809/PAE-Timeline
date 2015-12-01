@@ -9,6 +9,7 @@ var lazy = require('lazy');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var statistics = require('./routes/statistics');
 
 var app = express();
 
@@ -25,6 +26,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
+app.use('/statistics', statistics);
 app.use('/users', users);
 
 // creates a csv-file with just the temporal bounds
@@ -49,7 +51,12 @@ app.use('/objects', function(req, res, next) {
 		 .lines
 		 .forEach(function(line){
 			var js = JSON.parse(line);
-			timesArray.push({from:js.temporal_bounds.from , to:js.temporal_bounds.to});
+			var image_urls = Array();
+			var obj = {from:js.temporal_bounds.from , to:js.temporal_bounds.to,title:js.title,image_urls};
+			for(var i = 1; i < js.image_urls.length; i++){
+				obj.image_urls.push(js.image_urls[i]);
+			}
+			timesArray.push(obj);
 			}).on('pipe',function() {
 				res.end(JSON.stringify(timesArray));
 			});
