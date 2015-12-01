@@ -57,9 +57,9 @@ app.use('/objects', function(req, res, next) {
 				obj.image_urls.push(js.image_urls[i]);
 			}
 			timesArray.push(obj);
-			}).on('pipe',function() {
-				res.end(JSON.stringify(timesArray));
-			});
+		}).on('pipe',function() {
+			res.end(JSON.stringify(timesArray));
+		});
 });
 
 // catch 404 and forward to error handler

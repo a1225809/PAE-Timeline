@@ -3,8 +3,8 @@ $(document).ready(function() {
 	$("#loading").css("top",(window.innerHeight-100)/2);
 	$("#loading").css("left",(window.innerWidth-100)/2);
 	$.ajax({
-	url:'objects',
-	method:'get'}		
+		url:'objects',
+		method:'get'}		
 	).success(function(data){
 		console.log("Retrieving data success.");
 		var pd = JSON.parse(data);			
@@ -27,82 +27,105 @@ var minYear = 0;
 var maxYear = 1;
 var timeSpan = 0;
 var coins = Array();
-var visibleMinYear;
-var visibleMaxYear;
+var firstVisibleYear;
+var lastVisibleYear;
 var yearPositionMap = Array();
+var viewportWidth;
+var viewportHeight;
 
-var Initialize = function(pd) {
+var Initialize = function(pd) {	
 	canvas = document.getElementById("coin-canvas");
-	ctx = canvas.getContext("2d");
-	
+	ctx = canvas.getContext("2d");	
 	document.getElementById("zoomfactor").value = zoomfactor;
 	document.getElementById("panfactor").value = panfactor;
 	for(var i = 0; i < pd.length; i++){
 		AddCoin(pd[i]);
+		//console.log(pd[i].from+" - "+pd[i].image_urls[0]);
 	}
 	coins.sort();	
 	minYear -= 100;
 	maxYear += 100;
 	timeSpan = Math.abs(minYear)+Math.abs(maxYear);
 	CalculateBounds();
-	//gameLoop = setInterval("GameLoop",1000/150);
 	$("#loading").hide();
 	Draw();
+	$(window).resize(function(){ 
+		CalculateBounds(); 
+		CalculateImageProperties(); 
+		Draw(); 
+	});
 }
 
 // fetch bounds of canvas according to screen
 var CalculateBounds = function() {
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	//Inside function called by window.onload event handler (could go in CSS file, but   
+	//better to keep it with other related code in JS file)
+	document.getElementById('getDimensions').style.position = "fixed";
+	document.getElementById('getDimensions').style.bottom = "0px";
+	document.getElementById('getDimensions').style.right = "0px";   
+
+	//Everything below inside function called by window.onresize event handler
+	var baseWidthCalculation = document.getElementById('getDimensions').offsetLeft;
+	var baseHeightCalculation = document.getElementById('getDimensions').offsetTop;
+	//Account for the dimensions of the square img element (10x10)
+	viewportWidth = baseWidthCalculation ;
+	viewportHeight = baseHeightCalculation ;
+	canvas.width = viewportWidth;
+	canvas.height = viewportHeight;
 	CalculateImageProperties();
 }
 
 // fetch maximum of images which can be displayed as well as there width
 var CalculateImageProperties = function() {
-	var iw = imageMaxWidth;
 	maxImages = minImages;
 	imageWidth = imageMinWidth;
-	while(imageWidth*maxImages > window.innerWidth) {
+	while(imageWidth*maxImages < viewportWidth) {
 		imageWidth++;
 		maxImages++;
 	}
-}
-
-var GameLoop = function() {
-	Update();
-	Draw();
-}
-
-var Update = function() {
-	
+	console.log("maxImages: "+maxImages+", imageWidth: "+imageWidth)
 }
 
 var Draw = function() {
 	DrawTimeFrame();
-	//DrawImages();
+	DrawImages();
 }
 
 // draw the time frame with indicators of years, centuries and so on
 var DrawTimeFrame = function() {	
-	ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+	ctx.clearRect(0,0,viewportWidth,viewportHeight);
 	ctx.font = "12px Arial";
 	var cnt = 0;
 	yearPositionMap = [];
-	for(var j = minYear; j < maxYear; j+=GetLineStep()) {	
-		var mappedPan = (timeSpan*zoomfactor-window.innerWidth)*panfactor;
+	console.log("minYear: "+minYear+", maxYear: "+maxYear);
+	for(var j = minYear; j < maxYear; j++) {	
+		var mappedPan = (timeSpan*zoomfactor-viewportWidth)*panfactor;
 		var x = j+Math.abs(minYear);
 		x *= zoomfactor;
 		x -= mappedPan;
 		if(x < 0) {
 			continue;
-		} 		
-		if(x > window.innerWidth) {
+		} else if(x == 0){
+			firstVisibleYear = j;
+		}	
+		if(x > viewportWidth) {
+			lastVisibleYear = j;
 			break;
 		}
-		ctx.fillText(Math.round(j),x+5,window.innerHeight-50);
-		ctx.fillRect(x,window.innerHeight,1,-window.innerHeight*0.55);
-		yearPositionMap.push({year:j,position:x});
+		
+		if(ShouldDrawTimeIndicator(j)){
+			ctx.fillText(Math.round(j),x+5,viewportHeight-50);
+			ctx.fillRect(x,viewportHeight,1,-viewportHeight*0.35);
+		} else {
+			
+		}
+		yearPositionMap[j] = x;
 	}
+	console.log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
+}
+
+var ShouldDrawTimeIndicator = function(j){
+	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8));
 }
 
 var GetLineStep = function() {
@@ -116,38 +139,36 @@ var GetLineStep = function() {
 
 var DrawImages  = function() {
 	$('.coin').remove();
-	var lastImagePos = 0;	
-	for(var i = 0; i < yearPositionMap.length; i++) {
-		if(i < yearPositionMap.length-1) {
-			console.log("pos: "+yearPositionMap[i].position+", year: "+yearPositionMap[i+1].year);
-			for(var position = yearPositionMap[i].position; position < yearPositionMap[i+1].position; position++) {							
-				for(var year = yearPositionMap[i].year; year < yearPositionMap[i+1].year; year++) {
-					if(position > lastImagePos+imageWidth && LoadImage(position,year)) {
-						console.log("DRAW IMAGE at position: "+position);						
-						lastImagePos = position;
-					}
-				}
-			}				
+	$('.coin_title').remove();
+	var lastImagePos = 0;
+	var position = 0;
+	for (var year = firstVisibleYear; year < lastVisibleYear; year++){
+		if(yearPositionMap[year] > lastImagePos+imageWidth && LoadImage(yearPositionMap[year],year)) {
+			//console.log("DRAW IMAGE for year "+ year + " at position: "+yearPositionMap[year]);						
+			lastImagePos = yearPositionMap[year];
 		}
 	}
 }
 
 var LoadImage = function(position,year) {	
-	var url = GetImageUrl(year);
-	if(url == "") {
+	var coin = GetSingleCoin(year);	
+	if(coin === null) {
 		return false;
 	}
-	$('body').append("<div id='"+year+"' style='z-index:1000;position:fixed;top:"+window.innerHeight*0.5+"px;left:"+position+"px' class='coin'><img src='"+url+"' width='"+imageWidth+"' height='"+imageWidth+"'></div>");
+	coin.url = coin.url === undefined ? "images/no_pic.jpg" : coin.url;
+	//console.log(coin.url);
+	$('body').append("<div id='"+year+"' style='z-index:1000;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img src='"+coin.url+"' width='"+imageWidth+"' height='"+imageWidth+"'></div>");
+	$('body').append("<div style='z-index:1000;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>")
 	return true;
 }
 
 
-var GetImageUrl = function(year) {
-	//console.log("Get Coin for Year: "+year);
+var GetSingleCoin = function(year) {	
 	if(year in coins) {
-		return coins[year].coinList[0].image_urls[0];
+		//console.log(year+": "+coins[year].coinList[0].image_urls.length+" images, Title: "+coins[year].coinList[0].title);
+		return {url:coins[year].coinList[0].image_urls[0],title:coins[year].coinList[0].title};
 	} else {
-		return "";
+		return null;
 	}
 }
 
@@ -163,11 +184,6 @@ var UpdatePan = function(el) {
 	Draw();
 }
 
-var Translate = function(x,y){
-	ctx.translate(x,y);
-	ctx.currentTranslation = {x:x,y:y};
-}
-
 var AddCoin = function(data){	
 	if(data.to > new Date().getFullYear()) { 
 		return; 
@@ -175,11 +191,11 @@ var AddCoin = function(data){
 	
 	minYear = minYear < data.from ? minYear : data.from;
 	maxYear = maxYear > data.to ? maxYear : data.to;
-	if(!(minYear in coins)) {
+	if(!(data.from in coins)) {
 		//console.log("data: "+data.from+" -> "+data.to);
 		var cl = Array();
-		coins[minYear] = {coinList:cl};
+		coins[data.from] = {coinList:cl};
 	}	
-	coins[minYear].coinList.push(data);
+	coins[data.from].coinList.push(data);
 }
 
