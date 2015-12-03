@@ -47,16 +47,46 @@ app.use('/convert', function(req, res, next) {
 // returns a JSON string of temporal bounds for statistics 
 app.use('/objects', function(req, res, next) {
 	var timesArray = Array();	
+	var fromArray = Array();
 	new lazy(fs.createReadStream('coins-with-time.json.txt'))
 		 .lines
 		 .forEach(function(line){
 			var js = JSON.parse(line);
-			var image_urls = Array();
-			var obj = {from:js.temporal_bounds.from , to:js.temporal_bounds.to,title:js.title,image_urls};
-			for(var i = 1; i < js.image_urls.length; i++){
-				obj.image_urls.push(js.image_urls[i]);
+			if(fromArray.indexOf(js.temporal_bounds.from)  < 0) {
+				var image_urls = Array();
+				var obj = {from:js.temporal_bounds.from , to:js.temporal_bounds.to,title:js.title,image_urls};				
+				for(var i = 1; i < js.image_urls.length; i++){
+					obj.image_urls.push(js.image_urls[i]);
+				}
+				if(obj.image_urls.length < 1) {
+					obj.image_urls.push(js.image_urls);
+				}
+				timesArray.push(obj);
+				fromArray.push(js.temporal_bounds.from);
 			}
-			timesArray.push(obj);
+		}).on('pipe',function() {
+			res.end(JSON.stringify(timesArray));
+		});
+});
+
+app.use('/coins', function(req, res, next) {
+	var timesArray = Array();	
+	var year = req.query.year;
+	new lazy(fs.createReadStream('coins-with-time.json.txt'))
+		 .lines
+		 .forEach(function(line){
+			var js = JSON.parse(line);
+			if(req.query.year == js.temporal_bounds.from) {
+				var image_urls = Array();
+				var obj = {from:js.temporal_bounds.from,to:js.temporal_bounds.to,title:js.title,image_urls};				
+				for(var i = 1; i < js.image_urls.length; i++){
+					obj.image_urls.push(js.image_urls[i]);
+				}
+				if(obj.image_urls.length < 1) {
+					obj.image_urls.push(js.image_urls);
+				}
+				timesArray.push(obj);				
+			}
 		}).on('pipe',function() {
 			res.end(JSON.stringify(timesArray));
 		});

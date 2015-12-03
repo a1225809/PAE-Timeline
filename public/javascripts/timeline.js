@@ -32,6 +32,9 @@ var lastVisibleYear;
 var yearPositionMap = Array();
 var viewportWidth;
 var viewportHeight;
+var currentCoins;
+var currentCoinsStartIndex = 0;
+var currentCoinsEndIndex = 0;
 
 var Initialize = function(pd) {	
 	canvas = document.getElementById("coin-canvas");
@@ -87,12 +90,26 @@ var CalculateImageProperties = function() {
 }
 
 var Draw = function() {
+	/*for(var i = minYear; i < maxYear; i++){
+		//console.log(i);
+		//console.log(coins[i]);
+		if(coins[i] != undefined) {
+			var s = "<span>Year: "+i+", "+coins[i].coinList[0].title+", ";
+			if(coins[i].coinList[0].image_urls !== undefined) {
+				s+=coins[i].coinList[0].image_urls[0];
+			} else {
+				s+= "undefined";
+			}
+			s+="</span><br>";
+			$('body').append(s);
+		}
+	}*/
 	DrawTimeFrame();
 	DrawImages();
 }
 
 // draw the time frame with indicators of years, centuries and so on
-var DrawTimeFrame = function() {	
+var DrawTimeFrame = function() {
 	ctx.clearRect(0,0,viewportWidth,viewportHeight);
 	ctx.font = "12px Arial";
 	var cnt = 0;
@@ -109,6 +126,7 @@ var DrawTimeFrame = function() {
 			firstVisibleYear = j;
 		}	
 		if(x > viewportWidth) {
+			console.log(x);
 			lastVisibleYear = j;
 			break;
 		}
@@ -128,48 +146,72 @@ var ShouldDrawTimeIndicator = function(j){
 	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8));
 }
 
-var GetLineStep = function() {
-	var x  = (100*zoomfactor)%100;
-	if(x > 50) {
-		return x;
-	} else { 
-		return 100+x;
-	}
-}
-
 var DrawImages  = function() {
 	$('.coin').remove();
 	$('.coin_title').remove();
 	var lastImagePos = 0;
 	var position = 0;
 	for (var year = firstVisibleYear; year < lastVisibleYear; year++){
-		if(yearPositionMap[year] > lastImagePos+imageWidth && LoadImage(yearPositionMap[year],year)) {
-			//console.log("DRAW IMAGE for year "+ year + " at position: "+yearPositionMap[year]);						
+		//console.log("LOOK UP IMAGE for year "+ year + " at position: "+yearPositionMap[year]);
+		if(yearPositionMap[year] > lastImagePos+imageWidth && coins[year+"-"+year] !== undefined) {	
+			LoadImage(yearPositionMap[year],year);
 			lastImagePos = yearPositionMap[year];
 		}
 	}
 }
 
 var LoadImage = function(position,year) {	
-	var coin = GetSingleCoin(year);	
+	var coin = GetSingleCoin(year+"-"+year);	
 	if(coin === null) {
 		return false;
 	}
 	coin.url = coin.url === undefined ? "images/no_pic.jpg" : coin.url;
-	//console.log(coin.url);
-	$('body').append("<div id='"+year+"' style='z-index:1000;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img src='"+coin.url+"' width='"+imageWidth+"' height='"+imageWidth+"'></div>");
-	$('body').append("<div style='z-index:1000;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>")
+	//console.log(year+": "+coin.url);
+	$('body').append("<div onclick='GetCoinsForYear(this)' data-year='"+year+"' style='z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img src='"+coin.url+"' width='"+imageWidth+"' height='"+imageWidth+"'></div>");
+	$('body').append("<div onclick='GetCoinsForYear(this)' data-year='"+year+"' style='z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>");
 	return true;
 }
 
 
-var GetSingleCoin = function(year) {	
-	if(year in coins) {
+var GetSingleCoin = function(key) {	
+	//console.log("GetSingleCoin: "+key);
+	if(coins[key] !== undefined) {
 		//console.log(year+": "+coins[year].coinList[0].image_urls.length+" images, Title: "+coins[year].coinList[0].title);
-		return {url:coins[year].coinList[0].image_urls[0],title:coins[year].coinList[0].title};
+		return {url:coins[key].coinList[0].image_urls[0],title:coins[key].coinList[0].title};
 	} else {
 		return null;
 	}
+}
+
+var GetCoinsForYear = function(el) {
+	var year = el.getAttribute('data-year');
+	$("#loading").show();
+	$.ajax({
+		url:'coins',
+		method:'get',
+		data:{year:year}
+	}).success(function(data){
+		console.log("Retrieving coins success.");
+		var pd = JSON.parse(data);	
+		currentCoins = pd;
+		currentCoinsStartIndex = 0;
+		currentCoinsEndIndex = pd.length > 10 ? 10 : pd.length;
+		DrawCoinWindow();
+		$("#loading").hide();
+	});
+}
+
+var DrawCoinWindow = function() {
+	$('body').append("<div id='coin_window' style='overflow-y:scroll;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.5+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.25+"px'></div>");
+	$("#coin_window").append("<h3>Coins beginning with year "+currentCoins[0].from+"</h3><span style='position:absolute;top:0;right:0;z-index:100000' onclick='CloseCoinWindow()'>Close</span>");
+	for(var i = currentCoinsStartIndex; i < currentCoinsEndIndex; i++) {
+		$("#coin_window").append("<div class='coin_list'><div class='coin_list_img'><img width='50' height='50' src='"+currentCoins[i].image_urls[0]+"'></div><div class='coin_list_title'>"+currentCoins[i].title+"</div></div><br>");
+	}
+	$("#coin_window").append("<span style='position:absolute;bottom:0;right:0;z-index:100000' onclick='DrawCoinWindow()'>Load more...</span>");
+}
+
+var CloseCoinWindow = function() {
+	$("#coin_window").remove();
 }
 
 var UpdateZoom = function(el){
@@ -191,11 +233,11 @@ var AddCoin = function(data){
 	
 	minYear = minYear < data.from ? minYear : data.from;
 	maxYear = maxYear > data.to ? maxYear : data.to;
-	if(!(data.from in coins)) {
+	if(coins[data.from+"-"+data.from] === undefined) {
 		//console.log("data: "+data.from+" -> "+data.to);
 		var cl = Array();
-		coins[data.from] = {coinList:cl};
+		coins[data.from+"-"+data.from] = {coinList:cl};
 	}	
-	coins[data.from].coinList.push(data);
+	coins[data.from+"-"+data.from].coinList.push(data);
 }
 
