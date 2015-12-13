@@ -155,8 +155,8 @@ var LoadImage = function(position,year) {
 	}
 	coin.url = coin.url === undefined ? "images/no_pic.jpg" : coin.url;	
 	coin.url = GetUrl(coin.url);
-	$('body').append("<div onclick='GetCoinsForYear(this)' id='"+year+"-img' data-year='"+year+"' style='padding:2px;z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img style='user-drag: none; -moz-user-select: none;-webkit-user-drag: none' src='"+coin.url+"' width='"+imageWidth+"' ></div>");
-	$('body').append("<div onclick='GetCoinsForYear(this)' id='"+year+"-title' data-year='"+year+"' style='z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;-webkit-transform-origin: 0 0;transform:rotate(270deg);-webkit-transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>");
+	$('body').append("<div onclick='GetCoinsForYear(this)' id='"+year+"-img' data-year='"+year+"' style='cursor:pointer;padding:2px;z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img style='user-drag: none; -moz-user-select: none;-webkit-user-drag: none' src='"+coin.url+"' width='"+imageWidth+"' ></div>");
+	$('body').append("<div onclick='GetCoinsForYear(this)' id='"+year+"-title' data-year='"+year+"' style='cursor:pointer;z-index:99;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;-webkit-transform-origin: 0 0;transform:rotate(270deg);-webkit-transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>");
 	return true;
 }
 
@@ -188,12 +188,16 @@ var GetCoinsForYear = function(el) {
 }
 
 var DrawCoinWindow = function() {
-	$('body').append("<div id='coin_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.5+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.25+"px'></div>");
-	$("#coin_window").append("<h2>Coins beginning with year "+currentCoins[0].from+"</h2><span style='position:absolute;top:0;right:0;z-index:100000' onclick='CloseCoinWindow()'>X </span>");
-	$("#coin_window").append("<div id='coin_container' style='overflow-y:scroll;height:90%;background-color:darkgrey;padding:5px'></div>");
-	$("#coin_window").append("<span style='position:absolute;bottom:0;right:0;z-index:100000' onclick='LoadCoinsForWindow()'>Load more...</span>");
+	$('body').append("<div id='coin_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.65+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.25+"px'></div>");
+	$("#coin_window").append("<div style='height:30px'><h2>Coins beginning with year "+GetCoinLabel(currentCoins[0].from)+"</h2><span style='position:absolute;top:0;right:0;z-index:100000;cursor:pointer' onclick='CloseCoinWindow()'><img src='images/close_button.png' width='40'></span><div>");
+	$("#coin_window").append("<div id='coin_container' style='overflow-y:scroll;height:85%;background-color:darkgrey;padding:5px'></div>");
+        
+	$("#coin_window").append("<span id='coin_counter' style='position:absolute;bottom:0;left:10px;height:20px;'></span><span id='load_more' style='position:absolute;bottom:0;right:10px;height:20px;cursor:pointer;z-index:100000' onclick='LoadCoinsForWindow()'>Load more...</span>");
 }
 
+var GetCoinLabel = function(year) {
+    return year < 0 ? Math.abs(year) + " B.C." : year;
+}
 var LoadCoinsForWindow = function() {
 	for(var i = currentCoinsStartIndex; i < currentCoinsEndIndex; i++) {
 		var url = GetUrl(currentCoins[i].image_urls[0]);
@@ -201,6 +205,10 @@ var LoadCoinsForWindow = function() {
 	}
 	currentCoinsStartIndex = currentCoinsEndIndex;
 	currentCoinsEndIndex = currentCoins.length > currentCoinsEndIndex+10 ? currentCoinsEndIndex+10 : currentCoins.length;
+        if(currentCoinsEndIndex == currentCoins.length) {
+            $('#load_more').remove();
+        }
+        $('#coin_counter').html(currentCoinsEndIndex+' from '+ currentCoins.length +' coins loaded.');
 }
 
 var GetUrl = function(url){
