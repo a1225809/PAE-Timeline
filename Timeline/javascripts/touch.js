@@ -16,4 +16,4 @@ var UpdateHammer = function() {
 /*
 document.body.addEventListener('touchmove', function(event) {
   event.preventDefault();
-}, false);
+}, false);*/

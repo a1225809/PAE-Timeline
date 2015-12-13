@@ -52,6 +52,8 @@ var Initialize = function(pd) {
 		CalculateImageProperties(); 
 		Draw(); 
 	});
+        document.getElementById('zoomIn').onclick = function () { Zoom(0.2); };
+        document.getElementById('zoomOut').onclick = function () { Zoom(-0.2); };
 	
 }
 
@@ -69,7 +71,7 @@ var CalculateBounds = function() {
 	//Account for the dimensions of the square img element (10x10)
 	viewportWidth = baseWidthCalculation ;
 	viewportHeight = baseHeightCalculation ;
-	canvas.width = viewportWidth;
+	canvas.width = maxYear+Math.abs(minYear);
 	canvas.height = viewportHeight;
 	
 	CalculateImageProperties();
@@ -94,17 +96,18 @@ var Draw = function() {
 
 // draw the time frame with indicators of years, centuries and so on
 var DrawTimeFrame = function() {
-	ctx.clearRect(0,0,viewportWidth,viewportHeight);
+	ctx.clearRect(0,0,maxYear+Math.abs(minYear),viewportHeight);
 	ctx.font = "12px Arial";
 	var cnt = 0;
 	yearPositionMap = [];
+        canvas.width = (maxYear+Math.abs(minYear))*zoomfactor;
 	console.log("minYear: "+minYear+", maxYear: "+maxYear);
 	for(var j = minYear; j < maxYear; j++) {	
 		var mappedPan = (timeSpan*zoomfactor-viewportWidth)*panfactor;
 		var x = j+Math.abs(minYear);
 		x *= zoomfactor;
 		x -= mappedPan;
-		if(x < 0) {
+		/*if(x < 0) {
 			continue;
 		} else if(x == 0){
 			firstVisibleYear = j;
@@ -113,7 +116,7 @@ var DrawTimeFrame = function() {
 			lastVisibleYear = j;
 			break;
 		}
-		
+		*/
 		if(ShouldDrawTimeIndicator(j)){
 			ctx.fillText(Math.round(j),x+5,viewportHeight-10);
 			ctx.fillRect(x,viewportHeight,1,-viewportHeight*0.35);
@@ -122,6 +125,8 @@ var DrawTimeFrame = function() {
 		}
 		yearPositionMap[j] = x;
 	}
+	firstVisibleYear = minYear;
+        lastVisibleYear = maxYear;
 	console.log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
 }
 
@@ -217,6 +222,15 @@ var UpdateZoom = function(el){
 	zoomfactor = parseFloat(el.value,10);	
 	$("#zoomval").html(el.value+"x");
 	Draw();
+}
+
+var Zoom = function(percentage) {
+    var check = zoomfactor + percentage;
+    if(check < 1 || check > 10){
+        return;
+    }
+    zoomfactor += percentage;
+    Draw();
 }
 
 var UpdatePan = function(el) {
