@@ -339,6 +339,7 @@ var Zoom = function(percentage) {
         return;
     }
     zoomfactor += percentage;
+	zoomfactor = Math.round(zoomfactor*10)*.1;
 	$("#zoomfactor").html(zoomfactor+" x");
 	/*if(percentage < 0) {
 		$(".coin").remove();
@@ -393,7 +394,7 @@ var UpdateHammer = function() {
 	});
 	manager.on("pinchmove",function(ev){
 		Log("Scale: "+ev.scale+ ", Center: "+ev.center);
-		var scale = Math.round(ev.scale*100)/100;
+		var scale = Math.round(ev.scale*10)*.1;
 		HandleZoom(scale,ev.center);
 	});
 	manager.on("pinchend",function(ev){
