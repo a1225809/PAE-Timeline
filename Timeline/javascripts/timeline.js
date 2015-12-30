@@ -316,19 +316,20 @@ var CloseCoinRotationWindow = function() {
 
 var HandleZoom  = function(percentage,center) {
 	percentage = percentage > 1 ? percentage-1 : -(1-percentage);
-	Zoom(percentage/10);
-	var totalWidth = document.body.scrollWidth*percentage;
-	panfactor = panfactor+document.body.scrollWidth-totalWidth;
+	//Zoom(percentage);
+	//var totalWidth = document.body.scrollWidth*percentage;
+	//panfactor = panfactor+document.body.scrollWidth-totalWidth;
 	//panfactor = Math.abs(viewportWidth-center.x);
-	Log("Zoom-Pan: "+panfactor);
-	window.scrollTo(panfactor);
-	Log("Panfactor: "+panfactor);
+	//Log("Zoom-Pan: "+panfactor);
+	//window.scrollTo(panfactor);
+	//Log("Panfactor: "+panfactor);
+	
 	var check = zoomfactor + percentage;	
-    if(check < 1 || check > 40){
+    if(check < 1 || check > 100){
         return;
     }
     zoomfactor += percentage;
-	$("#zoomfactor").html(zoomfactor+" x");
+	$("#zoomfactor").html(Math.round(zoomfactor)+" x");
 	DrawTimeFrame();
 	DrawImages(false);
 	
@@ -339,8 +340,7 @@ var Zoom = function(percentage) {
         return;
     }
     zoomfactor += percentage;
-	zoomfactor = Math.round(zoomfactor*10)*.1;
-	$("#zoomfactor").html(zoomfactor+" x");
+	$("#zoomfactor").html(Math.round(zoomfactor)+" x");
 	/*if(percentage < 0) {
 		$(".coin").remove();
 		$(".coin_title").remove();
@@ -394,8 +394,7 @@ var UpdateHammer = function() {
 	});
 	manager.on("pinchmove",function(ev){
 		Log("Scale: "+ev.scale+ ", Center: "+ev.center);
-		var scale = Math.round(ev.scale*10)*.1;
-		HandleZoom(scale,ev.center);
+		HandleZoom(ev.scale,ev.center);
 	});
 	manager.on("pinchend",function(ev){
 	
