@@ -10,6 +10,8 @@ h1,h2,h3,h4,div,span {
 }
 h2{
     font-size:24px;
+    color:white;
+    text-align:center;
 }
 #statistics,#navigation {	
 	position:fixed; 
@@ -86,5 +88,9 @@ h2{
 	overflow-y:scroll
 }
 #coin_rotation_window {
-	background-color:rgba(140,181,107,0.4);
+	background-color:rgba(140,181,107,0.8);
+        perspective: 1000px;
+}
+#rotation_container {
+    position:relative;
 }

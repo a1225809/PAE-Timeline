@@ -37,6 +37,8 @@ var visibleCoins = Array();
 var lastPan = 0;
 var webConsole;
 var canDrawNewImages = true;
+var coinRotationInterval;
+var deg = 0;
 
 var Initialize = function(pd) {	
 	webConsole = $("#web_console");
@@ -150,7 +152,7 @@ var DrawDelayed = function() {
 }
 
 var ShouldDrawTimeIndicator = function(j){
-	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor < 15 && zoomfactor >= 8) || ((j%5 == 0) && zoomfactor >= 15));
+	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8) );
 }
 
 var DrawImages  = function() {
@@ -256,11 +258,31 @@ var LoadCoinsForWindow = function() {
 }
 
 var ShowCoinRotation = function(id) {
-	$('body').append("<div id='coin_rotation_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth+"px;height:"+window.innerHeight+"px;></div>");
-	$("#coin_rotation_window").append("<div style='height:30px'><h2>Coins beginning with year "+currentCoins[id].title+"</h2><span style='position:absolute;top:0;right:0;z-index:100000;cursor:pointer' onclick='CloseCoinWindow()'><img src='images/close_button.png' width='40'></span><div>");
+    Log("OpenCoinRotation for "+id);    
+    //$('body').append("<div id='coin_rotation_window'><");
+    
+	$('body').append("<div id='coin_rotation_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth+"px;height:"+window.innerHeight+"px; top:0px;left:0px;z-index:100000;'></div>");
+	$("#coin_rotation_window").append("<div style='height:30px;margin-top:10px;'><h2>"+currentCoins[id].title+"</h2><span style='position:absolute;top:0;right:10px;z-index:100000;cursor:pointer' onclick='CloseCoinRotationWindow()'><img src='images/close_button.png' width='40'></span><div>");
 	//$("#coin_rotation_window").append("<div id='coin_container' style='overflow-y:scroll;height:85%;background-color:darkgrey;padding:5px'></div>");        
 	//$("#coin_rotation_window").append("<span id='coin_counter' style='position:absolute;bottom:0;left:10px;height:20px;'></span><span id='load_more' style='position:absolute;bottom:0;right:10px;height:20px;cursor:pointer;z-index:100000' onclick='LoadCoinsForWindow()'>Load more...</span>");
+        var url1 = GetUrl(currentCoins[id].image_urls[0]);
+        var url2 = "images/no_pic.jpg";
+        if(currentCoins[id].image_urls.length > 1) {
+            url2 = GetUrl(currentCoins[id].image_urls[1]);
+        }
+        $("#coin_rotation_window").append("<div style='margin:"+viewportHeight*.05+"px "+viewportWidth*.35+"px;perspective:1000px'><div id='rotation_container'><div style='position:absolute;top:0;left:0;backface-visibility: hidden;'><img src='"+url1+"' width='"+viewportWidth*.3+"'></div><div style='position:absolute;top:0;left:0;transform:rotateY(180deg);backface-visibility: hidden;'><img src='"+url2+"' width='"+viewportWidth*.3+"'></div></div></div>");
+        deg = 0;
+        coinRotationInterval = setInterval(RotateCoin,100);
+}
 
+var RotateCoin = function() {
+    var div = document.getElementById('rotation_container');
+    div.style.webkitTransform = 'rotateY('+deg+'deg)'; 
+    div.style.mozTransform    = 'rotateY('+deg+'deg)'; 
+    div.style.msTransform     = 'rotateY('+deg+'deg)'; 
+    div.style.oTransform      = 'rotateY('+deg+'deg)'; 
+    div.style.transform       = 'rotateY('+deg+'deg)'; 
+    deg+=5;
 }
 
 /////////////
@@ -286,6 +308,12 @@ var GetUrl = function(url){
 var CloseCoinWindow = function() {
 	$("#coin_window").remove();
 }
+
+var CloseCoinRotationWindow = function() {
+	$("#coin_rotation_window").remove();
+        clearInterval(coinRotationInterval);
+}
+
 var HandleZoom  = function(percentage,center) {
 	percentage = percentage > 1 ? percentage-1 : -(1-percentage);
 	Zoom(percentage);
