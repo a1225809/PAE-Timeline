@@ -41,19 +41,17 @@ var coinRotationInterval;
 var deg = 0;
 
 var Initialize = function(pd) {	
-	webConsole = $("#web_console");
+	//webConsole = $("#web_console");
+	//$("#web_console").remove();
 	window.scrollTo(0,0);
 	document.getElementById('zoomIn').onclick = function () { Zoom(1); };
 	document.getElementById('zoomOut').onclick = function () { Zoom(-1); };
-	document.addEventListener("scroll", HandleScroll);
+	//document.addEventListener("scroll", HandleScroll);
 	panfactor = window.pageXOffset;
 	canvas = document.getElementById("coin_canvas");
 	ctx = canvas.getContext("2d");	
-	//document.getElementById("zoomfactor").value = zoomfactor;
-	//document.getElementById("panfactor").value = panfactor;
 	for(var i = 0; i < pd.length; i++){
 		AddCoin(pd[i]);
-		//Log(pd[i].from+" - "+pd[i].image_urls[0]);
 	}
 	coins.sort();	
 	minYear -= 100;
@@ -66,16 +64,13 @@ var Initialize = function(pd) {
 		CalculateBounds(); 
 		Draw(); 
 	});
-	
 	UpdateHammer();	
-	
 }
 
 var AddCoin = function(data){	
 	if(data.to > new Date().getFullYear()) { 
 		return; 
 	}
-	
 	minYear = minYear < data.from ? minYear : data.from;
 	maxYear = maxYear > data.to ? maxYear : data.to;
 	if(coins[data.from+"-"+data.from] === undefined) {
@@ -102,7 +97,6 @@ var CalculateBounds = function() {
 	viewportHeight = baseHeightCalculation ;
 	canvas.width = maxYear+Math.abs(minYear);
 	canvas.height = viewportHeight;
-	
 	CalculateImageProperties();
 }
 
@@ -119,8 +113,7 @@ var CalculateImageProperties = function() {
 
 var Draw = function() {
 	DrawTimeFrame();
-	DrawImages();
-	UpdateHammer();
+	DrawImages(true);
 }
 
 // draw the time frame with indicators of years, centuries and so on
@@ -155,13 +148,13 @@ var ShouldDrawTimeIndicator = function(j){
 	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8) );
 }
 
-var DrawImages  = function() {
+var DrawImages  = function(drawNew) {
 	visibleCoins = [];
 	lastImagePos = panfactor;
 	for (var year = minYear; year < maxYear; year++){
 		RepositionImage(yearPositionMap[year],year);
 	}
-	if(canDrawNewImages) {
+	if(canDrawNewImages && drawNew) {
 		setTimeout(DrawNewImages,1000);
 		canDrawNewImages = false;
 	}
@@ -183,10 +176,15 @@ var LoadImage = function(position,year) {
 
 var RepositionImage = function(position, year) {
 	if($("#"+year+"-title").length > 0) {
-		$("#"+year+"-img").css("left",position+"px");
-		$("#"+year+"-title").css("left",position+"px");
-		lastImagePos = position;
-		visibleCoins.push({year:year,startPos:position,endPos:position+imageWidth});
+		if(!IsSpaceForImage(position)){
+			$("#"+year+"-img").remove();
+			$("#"+year+"-title").remove();
+		} else {
+			$("#"+year+"-img").css("left",position+"px");
+			$("#"+year+"-title").css("left",position+"px");
+			lastImagePos = position;
+			visibleCoins.push({year:year,startPos:position,endPos:position+imageWidth});
+		}
 	}
 }
 
@@ -238,7 +236,7 @@ var GetCoinsForYear = function(year) {
 }
 
 var DrawCoinWindow = function() {
-	$('body').append("<div id='coin_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.65+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.25+"px'></div>");
+	$('body').append("<div id='coin_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.65+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.05+"px'></div>");
 	$("#coin_window").append("<div style='height:30px'><h2>Coins beginning with year "+GetCoinLabel(currentCoins[0].from)+"</h2><span style='position:absolute;top:0;right:0;z-index:10000;cursor:pointer' onclick='CloseCoinWindow()'><img src='images/close_button.png' width='40'></span><div>");
 	$("#coin_window").append("<div id='coin_container' style='overflow-y:scroll;height:85%;background-color:darkgrey;padding:5px'></div>");        
 	$("#coin_window").append("<span id='coin_counter' style='position:absolute;bottom:0;left:10px;height:20px;'></span><span id='load_more' style='position:absolute;bottom:0;right:10px;height:20px;cursor:pointer;z-index:10000' onclick='LoadCoinsForWindow()'>Load more...</span>");
@@ -259,20 +257,16 @@ var LoadCoinsForWindow = function() {
 
 var ShowCoinRotation = function(id) {
     Log("OpenCoinRotation for "+id);    
-    //$('body').append("<div id='coin_rotation_window'><");
-    
 	$('body').append("<div id='coin_rotation_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth+"px;height:"+window.innerHeight+"px; top:0px;left:0px;z-index:100000;'></div>");
 	$("#coin_rotation_window").append("<div style='height:30px;margin-top:10px;'><h2>"+currentCoins[id].title+"</h2><span style='position:absolute;top:0;right:10px;z-index:100000;cursor:pointer' onclick='CloseCoinRotationWindow()'><img src='images/close_button.png' width='40'></span><div>");
-	//$("#coin_rotation_window").append("<div id='coin_container' style='overflow-y:scroll;height:85%;background-color:darkgrey;padding:5px'></div>");        
-	//$("#coin_rotation_window").append("<span id='coin_counter' style='position:absolute;bottom:0;left:10px;height:20px;'></span><span id='load_more' style='position:absolute;bottom:0;right:10px;height:20px;cursor:pointer;z-index:100000' onclick='LoadCoinsForWindow()'>Load more...</span>");
-        var url1 = GetUrl(currentCoins[id].image_urls[0]);
-        var url2 = "images/no_pic.jpg";
-        if(currentCoins[id].image_urls.length > 1) {
-            url2 = GetUrl(currentCoins[id].image_urls[1]);
-        }
-        $("#coin_rotation_window").append("<div style='margin:"+viewportHeight*.05+"px "+viewportWidth*.35+"px;perspective:1000px'><div id='rotation_container'><div style='position:absolute;top:0;left:0;backface-visibility: hidden;'><img src='"+url1+"' width='"+viewportWidth*.3+"'></div><div style='position:absolute;top:0;left:0;transform:rotateY(180deg);backface-visibility: hidden;'><img src='"+url2+"' width='"+viewportWidth*.3+"'></div></div></div>");
-        deg = 0;
-        coinRotationInterval = setInterval(RotateCoin,100);
+	var url1 = GetUrl(currentCoins[id].image_urls[0]);
+	var url2 = "";
+	if(currentCoins[id].image_urls.length > 1) {
+		url2 = GetUrl(currentCoins[id].image_urls[1]);
+	}
+	$("#coin_rotation_window").append("<div style='margin:"+viewportHeight*.05+"px "+viewportWidth*.35+"px;perspective:1000px'><div id='rotation_container'><div style='position:absolute;top:0;left:0;-webkit-backface-visibility: hidden;backface-visibility: hidden;'><img src='"+url1+"' width='"+viewportWidth*.3+"'></div><div style='position:absolute;top:0;left:0;transform:rotateY(180deg);-webkit-backface-visibility: hidden;backface-visibility: hidden;'><img src='"+url2+"' width='"+viewportWidth*.3+"'></div></div></div>");
+	deg = 0;
+	coinRotationInterval = setInterval(RotateCoin,100);
 }
 
 var RotateCoin = function() {
@@ -311,15 +305,26 @@ var CloseCoinWindow = function() {
 
 var CloseCoinRotationWindow = function() {
 	$("#coin_rotation_window").remove();
-        clearInterval(coinRotationInterval);
+    clearInterval(coinRotationInterval);
 }
 
 var HandleZoom  = function(percentage,center) {
 	percentage = percentage > 1 ? percentage-1 : -(1-percentage);
-	Zoom(percentage);
-	panfactor = Math.abs(viewportWidth-center.x*percentage);
+	Zoom(percentage/10);
+	var totalWidth = document.body.scrollWidth*percentage;
+	panfactor = panfactor+document.body.scrollWidth-totalWidth;
+	//panfactor = Math.abs(viewportWidth-center.x);
+	Log("Zoom-Pan: "+panfactor);
 	window.scrollTo(panfactor);
 	Log("Panfactor: "+panfactor);
+	var check = zoomfactor + percentage;	
+    if(check < 1 || check > 30){
+        return;
+    }
+    zoomfactor += percentage;
+	$("#zoomfactor").html(zoomfactor+" x");
+	DrawTimeFrame();
+	DrawImages(false);
 }
 var Zoom = function(percentage) {
     var check = zoomfactor + percentage;	
@@ -328,10 +333,10 @@ var Zoom = function(percentage) {
     }
     zoomfactor += percentage;
 	$("#zoomfactor").html(zoomfactor+" x");
-	if(percentage < 0) {
+	/*if(percentage < 0) {
 		$(".coin").remove();
 		$(".coin_title").remove();
-	}
+	}*/
 	Draw();
 }
 
@@ -377,10 +382,21 @@ var UpdateHammer = function() {
 	});
 	manager.on("panend",function(ev) {
 		lastPan = 0;
+		Draw();
+		UpdateHammer();
 	});
 	manager.on("pinchmove",function(ev){
 		Log("Scale: "+ev.scale+ ", Center: "+ev.center);
-		Zoom(ev.scale,ev.center);
+		var scale = Math.round(ev.scale*100)/100;
+		HandleZoom(scale,ev.center);
+	});
+	manager.on("pinchend",function(ev){
+	
+		$(".coin").remove();
+		$(".coin_title").remove();
+		
+		Draw();
+		UpdateHammer();
 	});
 	manager.on("tap",function(ev){
 		HandleTap(ev.center);
@@ -394,5 +410,7 @@ var UpdatePanHammer = function(factor){
 }
 
 var Log = function(msg) {
-	webConsole.append("<span>"+msg+"</span></br>");
+	//return;
+	console.log(msg);
+	//webConsole.append("<span>"+msg+"</span></br>");
 }
