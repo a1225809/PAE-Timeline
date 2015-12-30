@@ -48,8 +48,8 @@ var Initialize = function(pd) {
 	document.getElementById('zoomOut').onclick = function () { Zoom(-1); };
 	//document.addEventListener("scroll", HandleScroll);
 	panfactor = window.pageXOffset;
-	canvas = document.getElementById("coin_canvas");
-	ctx = canvas.getContext("2d");	
+	//canvas = document.getElementById("coin_canvas");
+	//ctx = canvas.getContext("2d");	
 	for(var i = 0; i < pd.length; i++){
 		AddCoin(pd[i]);
 	}
@@ -95,8 +95,8 @@ var CalculateBounds = function() {
 	//Account for the dimensions of the square img element (10x10)
 	viewportWidth = baseWidthCalculation ;
 	viewportHeight = baseHeightCalculation ;
-	canvas.width = maxYear+Math.abs(minYear);
-	canvas.height = viewportHeight;
+	//canvas.width = maxYear+Math.abs(minYear);
+	//canvas.height = viewportHeight;
 	CalculateImageProperties();
 }
 
@@ -118,22 +118,24 @@ var Draw = function() {
 
 // draw the time frame with indicators of years, centuries and so on
 var DrawTimeFrame = function() {
-	ctx.clearRect(0,0,maxYear+Math.abs(minYear),viewportHeight);
-	ctx.font = "12px Arial";
-	var cnt = 0;
+	$('.indicator').remove();
+	//ctx.clearRect(0,0,maxYear+Math.abs(minYear),viewportHeight);
+	//ctx.font = "12px Arial";
+	
 	yearPositionMap = [];
-    canvas.width = (maxYear+Math.abs(minYear))*zoomfactor;
+    //canvas.width = (maxYear+Math.abs(minYear))*zoomfactor;
 	//Log("minYear: "+minYear+", maxYear: "+maxYear);
-	lastVisibleYearSet = false;
 	firstVisibleYear = Math.round(minYear+panfactor/zoomfactor);
 	lastVisibleYear = Math.round(minYear+(panfactor+viewportWidth)/zoomfactor);
 	for(var j = minYear; j < maxYear; j++) {	
 		var x = j+Math.abs(minYear);
 		x *= zoomfactor;
 		if(ShouldDrawTimeIndicator(j)){
-			ctx.fillText(Math.round(j),x+5,viewportHeight-10);
-			ctx.fillRect(x,viewportHeight,1,-viewportHeight*0.35);
+			//ctx.fillText(Math.round(j),x+5,viewportHeight-10);
+			//ctx.fillRect(x,viewportHeight,2,-viewportHeight*0.35);
+			$('body').append('<div class="indicator" style="border:solid 1px white; width:2px; height:50px;position:absolute;top:'+(viewportHeight-50)+'px;left:'+x+'px"><span style="margin-left:5px;color:white">'+j+'</span></div>');
 		} 
+		//if(zoomfactor > 10) { Log("x: "+x); }
 		yearPositionMap[j] = x;
 	}
 	Log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
@@ -145,7 +147,9 @@ var DrawDelayed = function() {
 }
 
 var ShouldDrawTimeIndicator = function(j){
-	return (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8) );
+	var drawTimeIndicator = (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8 && zoomfactor < 25) || ((j%5 == 0) && zoomfactor >= 25 && zoomfactor < 50) || ((j%5 == 0) && zoomfactor >= 50));
+	//if(zoomfactor > 10) { Log("j: "+j+" - flag: "+drawTimeIndicator); }
+	return drawTimeIndicator;
 }
 
 var DrawImages  = function(drawNew) {
@@ -158,12 +162,14 @@ var DrawImages  = function(drawNew) {
 		setTimeout(DrawNewImages,1000);
 		canDrawNewImages = false;
 	}
+	UpdateHammer();
 }
 var DrawNewImages = function() {
 	for (var year = firstVisibleYear; year < lastVisibleYear; year++){
 		LoadImage(yearPositionMap[year],year);
 	}
 	canDrawNewImages = true;
+	UpdateHammer();
 }
 var LoadImage = function(position,year) {	
 	var coin = GetSingleCoin(year+"-"+year);	
@@ -176,7 +182,7 @@ var LoadImage = function(position,year) {
 
 var RepositionImage = function(position, year) {
 	if($("#"+year+"-title").length > 0) {
-		if(!IsSpaceForImage(position)){
+		if(!IsSpaceForImage(position) || position < window.pageXOffset || position > window.pageXOffset+viewportWidth){
 			$("#"+year+"-img").remove();
 			$("#"+year+"-title").remove();
 		} else {
@@ -318,17 +324,18 @@ var HandleZoom  = function(percentage,center) {
 	window.scrollTo(panfactor);
 	Log("Panfactor: "+panfactor);
 	var check = zoomfactor + percentage;	
-    if(check < 1 || check > 30){
+    if(check < 1 || check > 40){
         return;
     }
     zoomfactor += percentage;
 	$("#zoomfactor").html(zoomfactor+" x");
 	DrawTimeFrame();
 	DrawImages(false);
+	
 }
 var Zoom = function(percentage) {
     var check = zoomfactor + percentage;	
-    if(check < 1 || check > 30){
+    if(check < 1 || check > 100){
         return;
     }
     zoomfactor += percentage;
@@ -361,7 +368,7 @@ var UpdateHammer = function() {
 	$("#input_layer").remove();
 	$("body").append("<div id='input_layer'><div>");
 	inputLayer = $("#input_layer");
-	inputLayer.css('width',document.body.scrollWidth+"px");
+	inputLayer.css('width',document.body.clientWidth+panfactor+"px");
 	inputLayer.css('height',document.body.clientHeight+"px");
 	inputLayer = document.getElementById('input_layer');
 	Log("Register Pan");
@@ -383,7 +390,6 @@ var UpdateHammer = function() {
 	manager.on("panend",function(ev) {
 		lastPan = 0;
 		Draw();
-		UpdateHammer();
 	});
 	manager.on("pinchmove",function(ev){
 		Log("Scale: "+ev.scale+ ", Center: "+ev.center);
@@ -396,7 +402,6 @@ var UpdateHammer = function() {
 		$(".coin_title").remove();
 		
 		Draw();
-		UpdateHammer();
 	});
 	manager.on("tap",function(ev){
 		HandleTap(ev.center);

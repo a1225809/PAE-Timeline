@@ -4,6 +4,7 @@ body {
 	-moz-user-select: none;
 	-o-user-select: none;
 	user-select: none;
+	background-color:black;
 }
 h1,h2,h3,h4,div,span {
     font-family:'Arial';
@@ -28,9 +29,9 @@ h2{
 }
 #statistics,#navigation,.coin_title,.coin,#coin_window {
 	color:white;
-	-webkit-box-shadow: 10px 10px 5px 0px rgba(0,0,0,0.75);
-	-moz-box-shadow: 10px 10px 5px 0px rgba(0,0,0,0.75);
-	box-shadow: 10px 10px 5px 0px rgba(0,0,0,0.75);
+	-webkit-box-shadow: 10px 10px 5px 0px rgba(155,155,155,0.75);
+	-moz-box-shadow: 10px 10px 5px 0px rgba(155,155,155,0.75);
+	box-shadow: 10px 10px 5px 0px rgba(155,155,155,0.75);
 }
 .coin_title,.coin {
 	background-color:rgba(140,181,107,0.7);
