@@ -1,7 +1,7 @@
 $(document).ready(function() {
 	$("#loading").show();
-	$("#loading").css("top",(window.innerHeight)/2);
-	$("#loading").css("left",(window.innerWidth)/2);
+	$("#loading").css("top",((window.innerHeight)/2-100)+"px");
+	$("#loading").css("left",((window.innerWidth)/2-100)+"px");
 	$.getJSON("json/objects.json", function(json){
 		Initialize(json);
 	});
@@ -43,11 +43,11 @@ var deg = 0;
 var Initialize = function(pd) {	
 	//webConsole = $("#web_console");
 	//$("#web_console").remove();
-	window.scrollTo(0,0);
+	document.getElementById('timeline-parent').scrollLeft = 0;
 	document.getElementById('zoomIn').onclick = function () { Zoom(1); };
 	document.getElementById('zoomOut').onclick = function () { Zoom(-1); };
 	//document.addEventListener("scroll", HandleScroll);
-	panfactor = window.pageXOffset;
+	panfactor = document.getElementById('timeline-parent').scrollLeft;
 	//canvas = document.getElementById("coin_canvas");
 	//ctx = canvas.getContext("2d");	
 	for(var i = 0; i < pd.length; i++){
@@ -98,6 +98,8 @@ var CalculateBounds = function() {
 	//canvas.width = maxYear+Math.abs(minYear);
 	//canvas.height = viewportHeight;
 	CalculateImageProperties();
+        document.getElementById('timeline').style.width = (Math.abs(minYear) + maxYear)*zoomfactor + "px";
+        document.getElementById('timeline').scrollLeft = panfactor; 
 }
 
 // fetch maximum of images which can be displayed as well as there width
@@ -108,7 +110,8 @@ var CalculateImageProperties = function() {
 		imageWidth++;
 		maxImages++;
 	}
-	Log("maxImages: "+maxImages+", imageWidth: "+imageWidth)
+	Log("maxImages: "+maxImages+", imageWidth: "+imageWidth);
+        
 }
 
 var Draw = function() {
@@ -133,11 +136,12 @@ var DrawTimeFrame = function() {
 		if(ShouldDrawTimeIndicator(j)){
 			//ctx.fillText(Math.round(j),x+5,viewportHeight-10);
 			//ctx.fillRect(x,viewportHeight,2,-viewportHeight*0.35);
-			$('body').append('<div class="indicator" style="border:solid 1px white; width:2px; height:50px;position:absolute;top:'+(viewportHeight-50)+'px;left:'+x+'px"><span style="margin-left:5px;color:white">'+j+'</span></div>');
+			$('#timeline').append('<div class="indicator" style="border:solid 1px white; width:2px; height:50px;position:absolute;top:'+(viewportHeight-50)+'px;left:'+x+'px"><span style="margin-left:5px;color:white">'+j+'</span></div>');
 		} 
 		//if(zoomfactor > 10) { Log("x: "+x); }
 		yearPositionMap[j] = x;
 	}
+	
 	Log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
 }
 
@@ -182,7 +186,7 @@ var LoadImage = function(position,year) {
 
 var RepositionImage = function(position, year) {
 	if($("#"+year+"-title").length > 0) {
-		if(!IsSpaceForImage(position) || position < window.pageXOffset || position > window.pageXOffset+viewportWidth){
+		if(!IsSpaceForImage(position) || position < document.getElementById('timeline-parent').scrollLeft || position > document.getElementById('timeline-parent').scrollLeft+viewportWidth){
 			$("#"+year+"-img").remove();
 			$("#"+year+"-title").remove();
 		} else {
@@ -196,8 +200,8 @@ var RepositionImage = function(position, year) {
 
 var DrawImage = function(position, year, coin) {
 	if(IsSpaceForImage(position)) {
-		$('body').append("<div id='"+year+"-img' data-year='"+year+"' style='cursor:pointer;padding:2px;z-index:98;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img style='user-drag: none; -moz-user-select: none;-webkit-user-drag: none' src='"+coin.url+"' width='"+imageWidth+"' ></div>");
-		$('body').append("<div id='"+year+"-title' data-year='"+year+"' style='cursor:pointer;z-index:98;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;-webkit-transform-origin: 0 0;transform:rotate(270deg);-webkit-transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>");
+		$('#timeline').append("<div id='"+year+"-img' data-year='"+year+"' style='cursor:pointer;padding:2px;z-index:98;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img style='user-drag: none; -moz-user-select: none;-webkit-user-drag: none' src='"+coin.url+"' width='"+imageWidth+"' ></div>");
+		$('#timeline').append("<div id='"+year+"-title' data-year='"+year+"' style='cursor:pointer;z-index:98;position:absolute;top:"+viewportHeight*0.8+"px;left:"+(position+(imageWidth*.25-5))+"px;height:"+imageWidth*.5+"px;transform-origin:0 0;-webkit-transform-origin: 0 0;transform:rotate(270deg);-webkit-transform:rotate(270deg)' class='coin_title'><span>"+coin.title+"</span></div>");
 		visibleCoins.push({year:year,startPos:position,endPos:position+imageWidth});
 	}
 }
@@ -306,11 +310,11 @@ var GetUrl = function(url){
 ////////////////////
 
 var CloseCoinWindow = function() {
-	$("#coin_window").remove();
+    $("#coin_window").remove();
 }
 
 var CloseCoinRotationWindow = function() {
-	$("#coin_rotation_window").remove();
+    $("#coin_rotation_window").remove();
     clearInterval(coinRotationInterval);
 }
 
@@ -347,15 +351,15 @@ var Zoom = function(percentage) {
 	}*/
 	Draw();
 }
-
+/*
 var HandleScroll = function() {
-	panfactor = window.pageXOffset;
+	panfactor = document.getElementById('timeline').scrollLeft;
 	if(drawNow){
 		setTimeout(DrawDelayed,1000);
 	}
 	drawNow = false;
 }
-
+*/
 var HandleTap = function(tapPosition) {
 	for(var i = 0; i < visibleCoins.length; i++) {
 		if(tapPosition.x+panfactor > visibleCoins[i].startPos && tapPosition.x+panfactor <  visibleCoins[i].endPos) {
@@ -367,7 +371,7 @@ var HandleTap = function(tapPosition) {
 
 var UpdateHammer = function() {
 	$("#input_layer").remove();
-	$("body").append("<div id='input_layer'><div>");
+	$("#timeline").append("<div id='input_layer'><div>");
 	inputLayer = $("#input_layer");
 	inputLayer.css('width',document.body.clientWidth+panfactor+"px");
 	inputLayer.css('height',document.body.clientHeight+"px");
@@ -393,7 +397,7 @@ var UpdateHammer = function() {
 		Draw();
 	});
 	manager.on("pinchmove",function(ev){
-		Log("Scale: "+ev.scale+ ", Center: "+ev.center);
+		//Log("Scale: "+ev.scale+ ", Center: "+ev.center);
 		HandleZoom(ev.scale,ev.center);
 	});
 	manager.on("pinchend",function(ev){
@@ -409,9 +413,16 @@ var UpdateHammer = function() {
 }
 
 var UpdatePanHammer = function(factor){
-	//Log(factor);
-	panfactor += factor;
-	window.scrollTo(panfactor,0);
+	//Log(panfactor);
+    //Log(document.getElementById('timeline').style.width - viewportWidth);
+	var tempPanfactor = panfactor;
+        panfactor += factor;
+        if(tempPanfactor > document.getElementById('timeline').style.width - viewportWidth || tempPanfactor < 0) {
+            panfactor = tempPanfactor;
+            return;
+        }
+        
+        document.getElementById('timeline-parent').scrollLeft = panfactor;
 }
 
 var Log = function(msg) {

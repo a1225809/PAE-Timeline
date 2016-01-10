@@ -11,12 +11,7 @@
 	<title>Coin Timeline</title>
 </head>
 <body>
-	<div>
-		<div style="margin:0;padding:0">
-		
-			<canvas style="border:1px solid black" id="coin_canvas" width="2500" height="1500"></canvas>
-			<!--<div id="web_console"></div>-->
-			<div style="" id="navigation">
+                    <div style="" id="navigation">
 				<!-- Buttons +/- -->
 				<span>Zoom:</span><span id="zoomfactor">1 x</span><br>				
 				<span id="zoomOut"><img width="55" src="images/minus_tr.png" /></span>
@@ -24,10 +19,16 @@
 				
 			</div>
 			
-			<div id="loading" style="position:fixed; top:25px;left:30px;width:300px;height:200px;z-index:10000">
+			<div id="loading" style="position:fixed; top:25px;left:30px;width:200px;height:200px;z-index:10000">
 				<img src="images/loading.gif" width="200" height="200">
 			</div> 
-		</div>
-	</div>
+                    <div id='timeline-parent' style="overflow-x:scroll; overflow-y:hidden">
+                    <div id="timeline" style='position:relative'>
+                    
+			<canvas style="border:1px solid black" id="coin_canvas" width="2500" height="1500"></canvas>
+			<!--<div id="web_console"></div>-->
+			
+                    </div>
+                    </div>
 	<img id="getDimensions" src="images/aSmallBox.png" alt="A small transparent image meant to determine the dimensions of the viewport" width="10px" height="10px"/>
 </body>
