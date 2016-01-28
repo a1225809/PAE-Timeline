@@ -30,7 +30,6 @@ var viewportHeight;
 var currentCoins;
 var currentCoinsStartIndex = 0;
 var currentCoinsEndIndex = 0;
-var drawNow = true;
 var lastImagePos;
 var inputLayer;
 var visibleCoins = Array();
@@ -39,7 +38,10 @@ var webConsole;
 var canDrawNewImages = true;
 var coinRotationInterval;
 var deg = 0;
+var manager;
+var timelineWidth = 0;
 
+// initialize dimensiions and event listeners like touch input
 var Initialize = function(pd) {	
 	//webConsole = $("#web_console");
 	//$("#web_console").remove();
@@ -48,8 +50,6 @@ var Initialize = function(pd) {
 	document.getElementById('zoomOut').onclick = function () { Zoom(-1); };
 	//document.addEventListener("scroll", HandleScroll);
 	panfactor = document.getElementById('timeline-parent').scrollLeft;
-	//canvas = document.getElementById("coin_canvas");
-	//ctx = canvas.getContext("2d");	
 	for(var i = 0; i < pd.length; i++){
 		AddCoin(pd[i]);
 	}
@@ -65,8 +65,12 @@ var Initialize = function(pd) {
 		Draw(); 
 	});
 	UpdateHammer();	
+	window.addEventListener("scroll",function(){
+		window.scrollTo(0,0)
+	},false);
 }
 
+// add a coin to the list of coins which will be rendered if time-span is visible
 var AddCoin = function(data){	
 	if(data.to > new Date().getFullYear()) { 
 		return; 
@@ -95,11 +99,10 @@ var CalculateBounds = function() {
 	//Account for the dimensions of the square img element (10x10)
 	viewportWidth = baseWidthCalculation ;
 	viewportHeight = baseHeightCalculation ;
-	//canvas.width = maxYear+Math.abs(minYear);
-	//canvas.height = viewportHeight;
 	CalculateImageProperties();
-        document.getElementById('timeline').style.width = (Math.abs(minYear) + maxYear)*zoomfactor + "px";
-        document.getElementById('timeline').scrollLeft = panfactor; 
+	timelineWidth = (Math.abs(minYear) + maxYear)*zoomfactor;
+	document.getElementById('timeline').style.width = timelineWidth + "px";
+	document.getElementById('timeline').scrollLeft = panfactor; 
 }
 
 // fetch maximum of images which can be displayed as well as there width
@@ -114,7 +117,9 @@ var CalculateImageProperties = function() {
         
 }
 
+// calls drawing functions for the timeline and all images which are visible
 var Draw = function() {
+	Log("Panfactor: "+panfactor);
 	DrawTimeFrame();
 	DrawImages(true);
 }
@@ -122,41 +127,32 @@ var Draw = function() {
 // draw the time frame with indicators of years, centuries and so on
 var DrawTimeFrame = function() {
 	$('.indicator').remove();
-	//ctx.clearRect(0,0,maxYear+Math.abs(minYear),viewportHeight);
-	//ctx.font = "12px Arial";
-	
 	yearPositionMap = [];
-    //canvas.width = (maxYear+Math.abs(minYear))*zoomfactor;
-	//Log("minYear: "+minYear+", maxYear: "+maxYear);
 	firstVisibleYear = Math.round(minYear+panfactor/zoomfactor);
 	lastVisibleYear = Math.round(minYear+(panfactor+viewportWidth)/zoomfactor);
 	for(var j = minYear; j < maxYear; j++) {	
 		var x = j+Math.abs(minYear);
 		x *= zoomfactor;
 		if(ShouldDrawTimeIndicator(j)){
-			//ctx.fillText(Math.round(j),x+5,viewportHeight-10);
-			//ctx.fillRect(x,viewportHeight,2,-viewportHeight*0.35);
 			$('#timeline').append('<div class="indicator" style="border:solid 1px white; width:2px; height:50px;position:absolute;top:'+(viewportHeight-50)+'px;left:'+x+'px"><span style="margin-left:5px;color:white">'+j+'</span></div>');
 		} 
 		//if(zoomfactor > 10) { Log("x: "+x); }
 		yearPositionMap[j] = x;
 	}
-	
-	Log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
+	timelineWidth = (Math.abs(minYear) + maxYear)*zoomfactor;
+	document.getElementById('timeline').style.width = timelineWidth + "px";
+	//Log("firstVisibleYear: "+firstVisibleYear+", lastVisibleYear: "+lastVisibleYear);
 }
 
-var DrawDelayed = function() {
-	Draw();
-	drawNow = true;
-}
-
+// evaluates if the year should be drawn on the timeline according to the zoomfactor and the year (j)
 var ShouldDrawTimeIndicator = function(j){
 	var drawTimeIndicator = (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8 && zoomfactor < 25) || ((j%5 == 0) && zoomfactor >= 25 && zoomfactor < 50) || ((j%5 == 0) && zoomfactor >= 50));
-	//if(zoomfactor > 10) { Log("j: "+j+" - flag: "+drawTimeIndicator); }
 	return drawTimeIndicator;
 }
 
+// draw the images (calls RepositionImage and draws new images)
 var DrawImages  = function(drawNew) {
+    Log("DrawImages");
 	visibleCoins = [];
 	lastImagePos = panfactor;
 	for (var year = minYear; year < maxYear; year++){
@@ -166,8 +162,12 @@ var DrawImages  = function(drawNew) {
 		setTimeout(DrawNewImages,1000);
 		canDrawNewImages = false;
 	}
-	UpdateHammer();
+	if(drawNew) {
+		UpdateHammer();
+	}
 }
+
+// draw new images (which where not visible before)
 var DrawNewImages = function() {
 	for (var year = firstVisibleYear; year < lastVisibleYear; year++){
 		LoadImage(yearPositionMap[year],year);
@@ -175,15 +175,26 @@ var DrawNewImages = function() {
 	canDrawNewImages = true;
 	UpdateHammer();
 }
+// load image and then draw it
 var LoadImage = function(position,year) {	
 	var coin = GetSingleCoin(year+"-"+year);	
 	if(coin === null) {
 		return false;
 	}
-	DrawImage(position,year,coin);
+	var image = new Image();
+        image.src = coin.url;
+        image.onload = function() {
+            DrawImage(position,year,coin);
+        }
+        image.onerror = function() {
+            coin.url = "images/no_pic.jpg";
+            DrawImage(position,year,coin);
+        }
+	
 	return true;
 }
 
+// reposition the image, which was already visible
 var RepositionImage = function(position, year) {
 	if($("#"+year+"-title").length > 0) {
 		if(!IsSpaceForImage(position) || position < document.getElementById('timeline-parent').scrollLeft || position > document.getElementById('timeline-parent').scrollLeft+viewportWidth){
@@ -198,6 +209,7 @@ var RepositionImage = function(position, year) {
 	}
 }
 
+// append image to the document
 var DrawImage = function(position, year, coin) {
 	if(IsSpaceForImage(position)) {
 		$('#timeline').append("<div id='"+year+"-img' data-year='"+year+"' style='cursor:pointer;padding:2px;z-index:98;position:absolute;top:"+viewportHeight*0.8+"px;left:"+position+"px' class='coin'><img style='user-drag: none; -moz-user-select: none;-webkit-user-drag: none' src='"+coin.url+"' width='"+imageWidth+"' ></div>");
@@ -206,6 +218,7 @@ var DrawImage = function(position, year, coin) {
 	}
 }
 
+// evaluates if there is sufficient space to draw a new coin-image
 var IsSpaceForImage = function(position) {
 	for(var i = 0; i < visibleCoins.length; i++) {
 		if(position >= visibleCoins[i].startPos-imageWidth && position <= visibleCoins[i].endPos){
@@ -217,6 +230,7 @@ var IsSpaceForImage = function(position) {
 	return true;
 }
 
+// returns a single coin with image path
 var GetSingleCoin = function(key) {	
 	if(coins[key] !== undefined) {
 		var coin = {url:coins[key].coinList[0].image_urls[0],title:coins[key].coinList[0].title};
@@ -228,6 +242,7 @@ var GetSingleCoin = function(key) {
 	}
 }
 
+// load json from server to show all coins at a given year
 var GetCoinsForYear = function(year) {
 	if($("#coin_window").length > 0) {
 		Log("open");
@@ -245,6 +260,7 @@ var GetCoinsForYear = function(year) {
 	});
 }
 
+// append a window to show all coins for a year to the document
 var DrawCoinWindow = function() {
 	$('body').append("<div id='coin_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth*.5+"px;height:"+window.innerHeight*.65+"px;left:"+window.innerWidth*.25+"px;top:"+window.innerHeight*.05+"px'></div>");
 	$("#coin_window").append("<div style='height:30px'><h2>Coins beginning with year "+GetCoinLabel(currentCoins[0].from)+"</h2><span style='position:absolute;top:0;right:0;z-index:10000;cursor:pointer' onclick='CloseCoinWindow()'><img src='images/close_button.png' width='40'></span><div>");
@@ -252,10 +268,15 @@ var DrawCoinWindow = function() {
 	$("#coin_window").append("<span id='coin_counter' style='position:absolute;bottom:0;left:10px;height:20px;'></span><span id='load_more' style='position:absolute;bottom:0;right:10px;height:20px;cursor:pointer;z-index:10000' onclick='LoadCoinsForWindow()'>Load more...</span>");
 }
 
+// load coins for the coin-window for the current year
 var LoadCoinsForWindow = function() {
 	for(var i = currentCoinsStartIndex; i < currentCoinsEndIndex; i++) {
 		var url = GetUrl(currentCoins[i].image_urls[0]);
-		$("#coin_container").append("<div class='coin_list' onclick='ShowCoinRotation("+i+")'><div class='coin_list_img'><img width='50' src='"+url+"'></div><div class='coin_list_title'>"+currentCoins[i].title+"</div></div><div style='clear:both'></div><hr>");
+                var title = currentCoins[i].title;
+                var image = new Image();
+                Log("Image: "+url);
+                image.onload = DrawCoinForWindow(url,title,i); 
+                image.onerror = DrawCoinForWindow("images/no_pic.jpg",title,i);
 	}
 	currentCoinsStartIndex = currentCoinsEndIndex;
 	currentCoinsEndIndex = currentCoins.length > currentCoinsEndIndex+10 ? currentCoinsEndIndex+10 : currentCoins.length;
@@ -265,6 +286,12 @@ var LoadCoinsForWindow = function() {
 	$('#coin_counter').html(currentCoinsEndIndex+' from '+ currentCoins.length +' coins loaded.');
 }
 
+// append a coin with title to the coin window container
+var DrawCoinForWindow = function(url,title,i) {
+    $("#coin_container").append("<div class='coin_list' onclick='ShowCoinRotation("+i+")'><div class='coin_list_img'><img width='50' src='"+url+"'></div><div class='coin_list_title'>"+title+"</div></div><div style='clear:both'></div><hr>");
+}
+
+// maximizes a coin and rotates it
 var ShowCoinRotation = function(id) {
     Log("OpenCoinRotation for "+id);    
 	$('body').append("<div id='coin_rotation_window' style='overflow:hidden;position:fixed;width:"+window.innerWidth+"px;height:"+window.innerHeight+"px; top:0px;left:0px;z-index:100000;'></div>");
@@ -279,6 +306,7 @@ var ShowCoinRotation = function(id) {
 	coinRotationInterval = setInterval(RotateCoin,100);
 }
 
+// rotate the coin with a interval
 var RotateCoin = function() {
     var div = document.getElementById('rotation_container');
     div.style.webkitTransform = 'rotateY('+deg+'deg)'; 
@@ -293,10 +321,12 @@ var RotateCoin = function() {
 // HELPERS //
 /////////////
 
+// concat a label according to year
 var GetCoinLabel = function(year) {
     return year < 0 ? Math.abs(year) + " B.C." : year;
 }
 
+// manipulate a url to load smaller images
 var GetUrl = function(url){
 	var newString = url;
 	if(url.substring(8,20) == "finds.org.uk" ) {
@@ -309,66 +339,54 @@ var GetUrl = function(url){
 // INPUT HANDLING //
 ////////////////////
 
+// close the coin window
 var CloseCoinWindow = function() {
     $("#coin_window").remove();
 }
 
+// close the window of the maximized rotating coin 
 var CloseCoinRotationWindow = function() {
     $("#coin_rotation_window").remove();
     clearInterval(coinRotationInterval);
 }
 
+// handle the zoom and call the drawing functions, do not draw new images 
 var HandleZoom  = function(percentage,center) {
-	percentage = percentage > 1 ? percentage-1 : -(1-percentage);
-	//Zoom(percentage);
-	//var totalWidth = document.body.scrollWidth*percentage;
-	//panfactor = panfactor+document.body.scrollWidth-totalWidth;
-	//panfactor = Math.abs(viewportWidth-center.x);
-	//Log("Zoom-Pan: "+panfactor);
-	//window.scrollTo(panfactor);
-	//Log("Panfactor: "+panfactor);
-	
-	var check = zoomfactor + percentage;	
+    percentage = percentage > 1 ? percentage-1 : -(1-percentage);
+    var check = zoomfactor + percentage;	
+	Log("Percentage: "+percentage);
     if(check < 1 || check > 100){
         return;
     }
     zoomfactor += percentage;
-	$("#zoomfactor").html(Math.round(zoomfactor)+" x");
-	DrawTimeFrame();
-	DrawImages(false);
+    $("#zoomfactor").html(Math.round(zoomfactor)+" x");
+    DrawTimeFrame();
+    DrawImages(false);
 	
 }
+
+// called from the + and - button in the document
 var Zoom = function(percentage) {
     var check = zoomfactor + percentage;	
     if(check < 1 || check > 100){
         return;
     }
     zoomfactor += percentage;
-	$("#zoomfactor").html(Math.round(zoomfactor)+" x");
-	/*if(percentage < 0) {
-		$(".coin").remove();
-		$(".coin_title").remove();
-	}*/
-	Draw();
-}
-/*
-var HandleScroll = function() {
-	panfactor = document.getElementById('timeline').scrollLeft;
-	if(drawNow){
-		setTimeout(DrawDelayed,1000);
-	}
-	drawNow = false;
-}
-*/
-var HandleTap = function(tapPosition) {
-	for(var i = 0; i < visibleCoins.length; i++) {
-		if(tapPosition.x+panfactor > visibleCoins[i].startPos && tapPosition.x+panfactor <  visibleCoins[i].endPos) {
-			GetCoinsForYear(visibleCoins[i].year);
-			break;
-		}
-	}
+    $("#zoomfactor").html(Math.round(zoomfactor)+" x");
+    Draw();
 }
 
+// handle single tap
+var HandleTap = function(tapPosition) {
+    for(var i = 0; i < visibleCoins.length; i++) {
+        if(tapPosition.x+panfactor > visibleCoins[i].startPos && tapPosition.x+panfactor <  visibleCoins[i].endPos) {
+            GetCoinsForYear(visibleCoins[i].year);
+                break;
+        }
+    }
+}
+
+// register hammer.js event listeners
 var UpdateHammer = function() {
 	$("#input_layer").remove();
 	$("#timeline").append("<div id='input_layer'><div>");
@@ -376,8 +394,12 @@ var UpdateHammer = function() {
 	inputLayer.css('width',document.body.clientWidth+panfactor+"px");
 	inputLayer.css('height',document.body.clientHeight+"px");
 	inputLayer = document.getElementById('input_layer');
-	Log("Register Pan");
-	var manager = new Hammer.Manager(inputLayer);
+	if(manager) {
+            Log("Destroy Input Manager");
+            manager.destroy();
+        }
+    Log("Register Input Events");
+	manager = new Hammer.Manager(inputLayer);
 	var Pan = new Hammer.Pan();
 	var Pinch = new Hammer.Pinch();
 	var Tap = new Hammer.Tap({
@@ -387,24 +409,24 @@ var UpdateHammer = function() {
 	manager.add(Pinch);
 	manager.add(Tap);
 	manager.on("panleft panright", function(ev) {
-		//Log("Pan: "+ev.deltaX);
+		
 		var pan = ev.deltaX-lastPan;
 		UpdatePanHammer(-pan);
 		lastPan = ev.deltaX;
 	});
 	manager.on("panend",function(ev) {
 		lastPan = 0;
+		Log("DRAW");
 		Draw();
+		
 	});
 	manager.on("pinchmove",function(ev){
 		//Log("Scale: "+ev.scale+ ", Center: "+ev.center);
 		HandleZoom(ev.scale,ev.center);
 	});
 	manager.on("pinchend",function(ev){
-	
-		$(".coin").remove();
-		$(".coin_title").remove();
-		
+		//$(".coin").remove();
+		//$(".coin_title").remove();
 		Draw();
 	});
 	manager.on("tap",function(ev){
@@ -412,21 +434,24 @@ var UpdateHammer = function() {
 	});
 }
 
+// set the scrollLeft according to the pan from hammer.js
 var UpdatePanHammer = function(factor){
-	//Log(panfactor);
-    //Log(document.getElementById('timeline').style.width - viewportWidth);
-	var tempPanfactor = panfactor;
-        panfactor += factor;
-        if(tempPanfactor > document.getElementById('timeline').style.width - viewportWidth || tempPanfactor < 0) {
-            panfactor = tempPanfactor;
-            return;
-        }
-        
-        document.getElementById('timeline-parent').scrollLeft = panfactor;
+    panfactor += factor;
+    //Log("panfactor: "+panfactor+" - factor: "+factor);  
+    if(panfactor < 0) {
+		panfactor = 0;
+	} else if(panfactor > timelineWidth - viewportWidth) {
+		panfactor = timelineWidth - viewportWidth;
+    } 
+    document.getElementById('timeline-parent').scrollLeft = panfactor;   
 }
+
+//////////////////////
+///// LOGGING ////////
+//////////////////////
 
 var Log = function(msg) {
 	//return;
-	console.log(msg);
+	//console.log(msg);
 	//webConsole.append("<span>"+msg+"</span></br>");
 }
