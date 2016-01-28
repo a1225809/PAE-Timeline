@@ -11,11 +11,12 @@
 	<title>Coin Timeline</title>
 </head>
 <body>
-                    <div style="" id="navigation">
+			<div style="" id="navigation">
 				<!-- Buttons +/- -->
-				<span>Zoom:</span><span id="zoomfactor">1 x</span><br>				
+				<!--<span>Zoom:</span><span id="zoomfactor">1 x</span><br>		-->		
 				<span id="zoomOut"><img width="55" src="images/minus_tr.png" /></span>
 				<span id="zoomIn"><img width="55" src="images/plus_tr.png" /></span>
+				<!--<span id="zoomIn" onclick="ClearLog()">Clear</span>-->
 				
 			</div>
 			
@@ -25,7 +26,7 @@
                     <div id='timeline-parent' style="overflow-x:scroll; overflow-y:hidden">
                     <div id="timeline" style='position:relative'>
                     
-			<canvas style="border:1px solid black" id="coin_canvas" width="2500" height="1500"></canvas>
+			<canvas id="coin_canvas" width="2500" height="1500"></canvas>
 			<!--<div id="web_console"></div>-->
 			
                     </div>

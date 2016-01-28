@@ -5,8 +5,9 @@ body {
 	-o-user-select: none;
 	user-select: none;
 	background-color:black;
-        overflow-x:hidden;
-        overflow-y:hidden;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	background-image:url('../images/background.jpg');
 }
 h1,h2,h3,h4,div,span {
     font-family:'Arial';
@@ -21,8 +22,8 @@ h2{
 	top:25px;
 	left:30px;
 	width:115px;
-	height:75px;	
-	background-color:#8CB56B; 
+	height:60px;	
+	background-color:rgba(34,17,71,1);
 	z-index:100;
 }
 #statistics,#navigation,.coin_title {
@@ -36,10 +37,10 @@ h2{
 	box-shadow: 10px 10px 5px 0px rgba(155,155,155,0.75);*/
 }
 .coin_title,.coin {
-	background-color:rgba(140,181,107,0.7);
+	background-color:rgba(34,17,71,0.7);
 }
 #coin_window {
-	background-color:rgba(140,181,107,0.9);
+	background-color:rgba(34,17,71,0.9);
 }
 .coin {
 	position:fixed;
@@ -86,13 +87,13 @@ h2{
 	left:30px;
 	width:300px;
 	height:200px;	
-	background-color:#8CB56B; 
+	background-color:white; 
 	z-index:100;
 	overflow-y:scroll
 }
 #coin_rotation_window {
-	background-color:rgba(140,181,107,0.8);
-        perspective: 1000px;
+	background-color:rgba(34,17,71,0.8);
+    perspective: 1000px;
 }
 #rotation_container {
     position:relative;
