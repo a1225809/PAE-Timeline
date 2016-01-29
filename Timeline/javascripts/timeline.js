@@ -1,7 +1,7 @@
 $(document).ready(function() {
 	$("#loading").show();
-	$("#loading").css("top",((window.innerHeight)/2-100)+"px");
-	$("#loading").css("left",((window.innerWidth)/2-100)+"px");
+	$("#loading").css("top",((window.innerHeight)/2-50)+"px");
+	$("#loading").css("left",((window.innerWidth)/2-50)+"px");
 	$.getJSON("json/objects.json", function(json){
 		Initialize(json);
 	});
@@ -147,7 +147,7 @@ var DrawTimeFrame = function() {
 // evaluates if the year should be drawn on the timeline according to the zoomfactor and the year (j)
 var ShouldDrawTimeIndicator = function(j){
 	var drawTimeIndicator = (((j%100 == 0) && zoomfactor < 2) || ((j%50 == 0) && zoomfactor >= 2 && zoomfactor < 4) || ((j%25 == 0) && zoomfactor >= 4 && zoomfactor < 8) || ((j%10 == 0) && zoomfactor >= 8 && zoomfactor < 25) || ((j%5 == 0) && zoomfactor >= 25 && zoomfactor < 50) || ((j%5 == 0) && zoomfactor >= 50));
-	drawTimeIndicator = j > firstVisibleYear && j < lastVisibleYear && drawTimeIndicator;
+	drawTimeIndicator = j > firstVisibleYear-100 && j < lastVisibleYear+100 && drawTimeIndicator;
 	return drawTimeIndicator;
 }
 
@@ -391,7 +391,7 @@ var Zoom = function(percentage) {
         return;
     }
     zoomfactor += percentage;
-    $("#zoomfactor").html(Math.round(zoomfactor)+" x");
+    //$("#zoomfactor").html(Math.round(zoomfactor)+" x");
     Draw();
 }
 

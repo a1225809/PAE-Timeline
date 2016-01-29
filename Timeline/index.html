@@ -5,31 +5,37 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, min-scale=1, max-scale=1">
 	<link rel="stylesheet" href="stylesheets/clear.css" type="text/css">
 	<link rel="stylesheet" href="stylesheets/timeline.css" type="text/css">
+	<link rel="stylesheet" href="stylesheets/banner.css" type="text/css">
 	<script src="javascripts/jquery.min.js"></script>
 	<script src="javascripts/hammer.min.js"></script>
 	<script src="javascripts/timeline.js"></script>
 	<title>Coin Timeline</title>
 </head>
 <body>
-			<div style="" id="navigation">
-				<!-- Buttons +/- -->
-				<!--<span>Zoom:</span><span id="zoomfactor">1 x</span><br>		-->		
-				<span id="zoomOut"><img width="55" src="images/minus_tr.png" /></span>
-				<span id="zoomIn"><img width="55" src="images/plus_tr.png" /></span>
-				<!--<span id="zoomIn" onclick="ClearLog()">Clear</span>-->
+	<div id="banner">
+		<div id="bannerLeft"></div>
+		<div id="bannerRight"><h2>Coin<br>Timeline</h2></div>
+	</div>
+	<div style="" id="navigation">
+		<!-- Buttons +/- -->
+		<!--<span>Zoom:</span><span id="zoomfactor">1 x</span><br>		-->		
+		<span id="zoomOut"><img width="55" src="images/minus_tr.png" /></span>
+		<span id="zoomIn"><img width="55" src="images/plus_tr.png" /></span>
+		<div style="text-align:center;width:115px;height:20px;padding-top:5px;background-color:#0c3378"><a style="color:white;text-align:center" href="statistics.html">Statistics</a></div>
+		<!--<span id="zoomIn" onclick="ClearLog()">Clear</span>-->
+		
+	</div>
+	
+	<div id="loading" style="position:fixed; top:25px;left:30px;width:100px;height:100px;z-index:10000">
+		<img src="images/loading.gif" width="100" height="100">
+	</div> 
+	<div id='timeline-parent' style="overflow-x:scroll; overflow-y:hidden">
+		<div id="timeline" style='position:relative'>
 				
-			</div>
-			
-			<div id="loading" style="position:fixed; top:25px;left:30px;width:200px;height:200px;z-index:10000">
-				<img src="images/loading.gif" width="200" height="200">
-			</div> 
-                    <div id='timeline-parent' style="overflow-x:scroll; overflow-y:hidden">
-                    <div id="timeline" style='position:relative'>
-                    
 			<canvas id="coin_canvas" width="2500" height="1500"></canvas>
 			<!--<div id="web_console"></div>-->
-			
-                    </div>
-                    </div>
+		
+		</div>
+	</div>
 	<img id="getDimensions" src="images/aSmallBox.png" alt="A small transparent image meant to determine the dimensions of the viewport" width="10px" height="10px"/>
 </body>

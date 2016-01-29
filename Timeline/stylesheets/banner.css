@@ -1,0 +1,30 @@
+#banner {
+	position:fixed;
+	top:25px;
+	left:0px;
+	height:100px;
+	width:100%;
+}
+#bannerLeft {
+	height:90px;
+	max-height:90px;
+	width:80%;
+	background-color:rgba(0,0,0,0.3);
+	float:left;
+}
+#bannerRight {
+	height:72px;
+	max-height:72px;
+	width:18%;
+	background-color:rgba(34,17,71,1);
+	float:right;
+	padding-top:18px;
+}
+h1,h2,h3,h4,div,span {
+    font-family:'Arial';
+}
+h2{
+    font-size:24px;
+    color:white;
+    text-align:center;
+}
