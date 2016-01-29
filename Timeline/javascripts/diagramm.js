@@ -17,7 +17,7 @@ $(document).ready(function(){
 		statistics.append("<div>Retrieving data success.<br> "+pd.length+" Datasets</div><br>");
 		createRects(pd);
 		statistics.append('<span>Different time periods: '+rectArrayKeys.length+'</span><br>');
-		statistics.append('<span>min Year: '+minYear+'<br>max Year: '+diagrammMaxYear+'<br>max Coins at one period: '+maxItems+'</span><br>');		
+		statistics.append('<span>min Year: '+diagrammMinYear+'<br>max Year: '+diagrammMaxYear+'<br>max Coins at one period: '+maxItems+'</span><br>');		
 		drawDiagramm();		
 	});
 	
@@ -37,10 +37,10 @@ var rectArray = Array();
 		ctx.clearRect(0,0,diagrammMaxYear,maxItems+100);	
 		rectArrayIterator = 0;
 		interval = setInterval(drawRects,1);
-		for(var j = minYear; j < diagrammMaxYear; j+=100) {
+		for(var j = diagrammMinYear; j < diagrammMaxYear; j+=100) {
 			ctx.font = "12px Arial";
-			ctx.fillText(j,j+Math.abs(minYear),maxItems+50);
-			ctx.fillRect(j+Math.abs(minYear),maxItems+60,1,40);
+			ctx.fillText(j,j+Math.abs(diagrammMinYear),maxItems+50);
+			ctx.fillRect(j+Math.abs(diagrammMinYear),maxItems+60,1,40);
 		}
 	}
 
@@ -51,7 +51,7 @@ var rectArray = Array();
 			if(r !== undefined) {
 				var canvas = document.getElementById('diagramm-canvas');
 				var ctx = canvas.getContext("2d");
-				ctx.fillRect(r.x+Math.abs(minYear),maxItems,r.width,-r.height);
+				ctx.fillRect(r.x+Math.abs(diagrammMinYear),maxItems,r.width,-r.height);
 			}
 			rectArrayIterator++;
 		} else {
@@ -74,7 +74,7 @@ var rectArray = Array();
 			statistics2.append('<span onclick="highlightRect(\''+data.from+'-'+data.to+'\')" onmouseover="highlightRect(\''+data.from+'-'+data.to+'\')" onmouseout="unhighlightRect(\''+data.from+'-'+data.to+'\')" id="'+data.from+'-'+data.to+'">'+data.from + " - " + data.to + ", 1 coin</span><br>");
 		}
 		rectArray[data.from+'-'+data.to] = {x:data.from,y:1400,width:Math.abs(data.from-data.to),height:height};	
-		minYear = diagrammMinYear < parseInt(data.from,10) ? diagrammMinYear : parseInt(data.from,10);
+		diagrammMinYear = diagrammMinYear < parseInt(data.from,10) ? diagrammMinYear : parseInt(data.from,10);
 		diagrammMaxYear = diagrammMaxYear > parseInt(data.to,10) ? diagrammMaxYear : parseInt(data.to,10);	
 		maxItems = maxItems > height ? maxItems : height;
 	}
@@ -93,6 +93,6 @@ var highlight = function(key,color){
 	var ctx = canvas.getContext("2d");
 	var r = rectArray[key];
 	ctx.fillStyle=color;
-	ctx.fillRect(r.x+Math.abs(minYear),maxItems,r.width,-r.height);
+	ctx.fillRect(r.x+Math.abs(diagrammMinYear),maxItems,r.width,-r.height);
 	ctx.stroke();
 }
